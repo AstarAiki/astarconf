@@ -29,7 +29,8 @@ print(conf.database.user)
 ```bash
 astarconf -g ~/.astarconf/secret.key	#Generate a new secret key (default: ~/.astartool/secret.key)
 astarconf -r ~/.astarconf/secret.key	#Delete a secret key at specified path
-astarconf -c config.yaml user password	#"Encrypt YAML file: first argument is path, others are field names (default: user, password)
+astarconf -c config.yaml user password	#Encrypt YAML file: first argument is path, 
+                                        others are field names (default: user, password)
 astarconf -d config.yaml -o output.yaml	#Decrypt all encrypted fields in YAML file 
 ```
 
