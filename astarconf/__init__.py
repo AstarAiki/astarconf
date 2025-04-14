@@ -13,6 +13,10 @@ class Color:
 
 
 class AttrNamespace:
+    """Provides attribute and key-style access to nested dictionaries.
+
+    Supports `.key`, `['key']`, `.to_dict()`, `.to_json()` and JSON import.
+    """
     __slots__ = ('__data',)
 
     def __init__(self, mapping):
@@ -29,6 +33,14 @@ class AttrNamespace:
             raise AttributeError(name)
 
     def __getitem__(self, key):
+        """Allows dict-style access to top-level keys.
+
+        Args:
+            key (str): Top-level config key.
+
+        Returns:
+            Any: The corresponding config value.
+        """
         return self.__data[key]
 
     def __setattr__(self, name, value):
@@ -41,6 +53,11 @@ class AttrNamespace:
         return key in self.__data
 
     def to_dict(self):
+        """Recursively converts the AttrNamespace to a plain Python dictionary.
+
+        Returns:
+            dict: A deep copy of internal data as a plain dict.
+        """
         def unwrap(value):
             if isinstance(value, AttrNamespace):
                 return value.to_dict()
@@ -48,16 +65,37 @@ class AttrNamespace:
         return {k: unwrap(v) for k, v in self.__data.items()}
 
     def to_json(self, **kwargs):
+        """Serializes the internal data to a JSON-formatted string.
+
+        Args:
+            **kwargs: Optional arguments passed to `json.dumps()`.
+
+        Returns:
+            str: JSON string representation.
+        """
         import json
         return json.dumps(self.to_dict(), **kwargs)
 
     @classmethod
     def from_json(cls, json_str):
+        """Creates an AttrNamespace object from a JSON string.
+
+        Args:
+            json_str (str): JSON-formatted string.
+
+        Returns:
+            AttrNamespace: An instance initialized from the JSON data.
+        """
         import json
         data = json.loads(json_str)
         return cls(data)
 
     def __repr__(self):
+        """Returns string representation of the configuration object.
+
+        Returns:
+            str: Debug-friendly string with current config.
+        """
         return f"<AttrNamespace {self.__data}>"
 
     def __contains__(self, key):
@@ -176,6 +214,14 @@ DEFAULT_SECRET_LOCATIONS = [
 
 
 def find_secret_key():
+    """Searches default locations for the secret key used for encryption.
+
+    Returns:
+        bytes: The loaded secret key.
+
+    Raises:
+        FileNotFoundError: If no valid key is found in known locations.
+    """
     for path_func in DEFAULT_SECRET_LOCATIONS:
         try:
             path = path_func()
@@ -192,6 +238,14 @@ def find_secret_key():
 
 
 def generate_secret_key(to_path):
+    """Generates and stores a new encryption key at the given file path.
+
+    Args:
+        to_path (str): Path to save the generated key.
+
+    Exits:
+        On error creating the directory or writing the file.
+    """
     try:
         os.makedirs(os.path.dirname(to_path), exist_ok=True)
     except Exception as e:
@@ -206,6 +260,11 @@ def generate_secret_key(to_path):
 
 
 def delete_secret_key(path):
+    """Deletes the secret key file if it exists.
+
+    Args:
+        path (str): Path to the key file to be deleted.
+    """
     if os.path.isfile(path):
         os.remove(path)
         print(f"{Color.YELLOW}Deleted secret key from {path}{Color.RESET}")
@@ -214,6 +273,13 @@ def delete_secret_key(path):
 
 
 def encrypt_yaml_fields(yaml_path, key, field_names=None):
+    """Encrypts specified fields in a YAML file using Fernet.
+
+    Args:
+        yaml_path (str): Path to the YAML configuration file.
+        key (bytes): Encryption key (Fernet).
+        field_names (list, optional): List of fields to encrypt. Defaults to ['user', 'password'].
+    """
     if field_names is None:
         field_names = ["user", "password"]
 
@@ -242,6 +308,14 @@ def encrypt_yaml_fields(yaml_path, key, field_names=None):
 
 
 def decrypt_yaml_fields(yaml_path, key, output_path=None, force=False):
+    """Decrypts encrypted fields in a YAML file.
+
+    Args:
+        yaml_path (str): Path to the encrypted YAML file.
+        key (bytes): Encryption key.
+        output_path (str, optional): Path to save decrypted output. Defaults to overwriting input.
+        force (bool): Overwrite output file if it exists. Defaults to False.
+    """
     if output_path and os.path.exists(output_path) and not force:
         print(f"{Color.RED}Error: Output file '{output_path}' already exists. Use --force to overwrite.{Color.RESET}")
         sys.exit(1)
@@ -275,6 +349,14 @@ def decrypt_yaml_fields(yaml_path, key, output_path=None, force=False):
 
 
 def is_encrypted(value):
+    """Determines if a given string is encrypted based on Fernet prefix.
+
+    Args:
+        value (str): String to check.
+
+    Returns:
+        bool: True if encrypted, False otherwise.
+    """
     return (
         isinstance(value, str)
         and value.startswith("gAAAAAB")
@@ -286,6 +368,11 @@ from dotenv import dotenv_values
 import json
 
 class Astarconf:
+    """Main configuration loader and decryptor.
+
+    Supports YAML, JSON, .env, and dict as input sources.
+    Automatically decrypts Fernet-encrypted fields.
+    """
     def __init__(self, source, nested_as_attr=False, hybrid_mode=True):
         self._key = find_secret_key()
         self._fernet = Fernet(self._key)
@@ -317,6 +404,7 @@ class Astarconf:
                 setattr(self, key, value)
 
     def _decrypt_fields(self, obj):
+        """Recursively decrypts any encrypted values in a dictionary or list."""
         if isinstance(obj, dict):
             for k, v in obj.items():
                 if isinstance(v, str) and is_encrypted(v):
@@ -385,4 +473,3 @@ Examples:
         decrypt_yaml_fields(args.decrypt, key, output_path=args.output, force=args.force)
     else:
         parser.print_help()
-

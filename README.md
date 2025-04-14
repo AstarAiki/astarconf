@@ -37,3 +37,9 @@ astarconf -d config.yaml -o output.yaml	#Decrypt all encrypted fields in YAML fi
 ## License
 
 MIT
+
+---
+
+## 📚 Full Documentation
+
+See [DOCUMENTATION.md](DOCUMENTATION.md) for detailed API and CLI usage.
