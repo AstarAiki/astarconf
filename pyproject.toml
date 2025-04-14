@@ -13,6 +13,12 @@ dependencies = [
     "python-dotenv"
 ]
 
+[project.urls]
+Repository = "https://github.com/astaraiki/astarconf"
+Homepage = "https://github.com/astaraiki/astarconf"
+Documentation = "https://github.com/astaraiki/astarconf/blob/main/DOCUMENTATION.md"
+Contributing =  "https://github.com/astaraiki/astarconf/blob/main/CONTRIBUTING.md"
+
 [project.scripts]
 astarconf = "astarconf:main"
 
