@@ -419,3 +419,9 @@ class Astarconf:
     def __repr__(self):
         return f"<Astarconf {self._data}>"
 
+    def get(self, key, default=None):
+            """
+            Allows values to be retrieved using .get() as in dict.
+            """
+            return self._data.get(key, default)
+
