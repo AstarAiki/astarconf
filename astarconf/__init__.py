@@ -398,6 +398,13 @@ class Astarconf:
             else:
                 setattr(self, key, value)
 
+
+    def items(self):
+            """
+            Allows .items() to be used as in dict.
+            """
+            return self._data.items()
+
     def _decrypt_fields(self, obj):
         """Recursively decrypts any encrypted values in a dictionary or list."""
         if isinstance(obj, dict):
